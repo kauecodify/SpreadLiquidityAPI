@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Simulação de Pagamentos</title>
+</head>
+
+<body>
+
+<h2>Pedido atacado (commodities)</h2>
+
+<input id="client" placeholder="Client ID"><br><br>
+<input id="product" placeholder="Product ID"><br><br>
+<input id="value" type="number" placeholder="Value"><br><br>
+<input id="qty" type="number" placeholder="Quantidade"><br><br>
+
+<select id="payment">
+<option value="pix">PIX</option>
+<option value="card">Cartão</option>
+</select>
+
+<br><br>
+
+<button onclick="createOrder()">Criar Pedido</button>
+
+<div id="result"></div>
+
+<script>
+
+let currentOrder
+
+async function createOrder(){
+
+const response = await fetch("http://localhost:3000/orders",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+client_id:client.value,
+product_id:product.value,
+value:value.value,
+quantity:qty.value,
+payment_method:payment.value
+})
+})
+
+const order = await response.json()
+
+currentOrder = order.order_id
+
+result.innerHTML =
+`Pedido criado: ${order.order_id}
+<br>
+Valor unitário: ${order.value}
+<br>
+Quantidade: ${order.quantity}
+<br>
+Total: ${order.total}
+<br><br>
+<button onclick="pay()">Pagar</button>`
+}
+
+async function pay(){
+
+const response = await fetch(
+`http://localhost:3000/payments/${currentOrder}`,
+{method:"POST"}
+)
+
+const data = await response.json()
+
+result.innerHTML +=
+`<br><br>
+Liquidação: ${data.settlement.status}
+<br>
+Valor liquidado: ${data.settlement.amount}
+<br>
+Tempo: ${data.settlement.latency_ms} ms`
+}
+
+</script>
+
+</body>
+</html>
